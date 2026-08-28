@@ -39,3 +39,9 @@
 - sidechat.prompt 投递任务书
 - layout.toggleSidebar 强制展开侧栏
 - 任务书加「【作者验证提示】」指令：让模型第一轮回复开头复述继承背景
+
+## 2026-08-28 ~12:00 — v0.0.19~v0.0.25 sidebar float 收口
+- sidebar 浮按钮（主流程外的小入口）从默认开启 → 0.0.25 停用
+- 配置项 `sidebarFloatingButtonEnabled` 保留向后兼容（默认 false, 设置页可手动开启）
+- UI 收口为「仅主框 ✨」单一入口
+- v0.0.25: 文档 / 注释 / CHANGELOG 同步
