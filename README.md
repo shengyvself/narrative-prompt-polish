@@ -124,3 +124,18 @@ docs/sidebar-integration.md  联动层集成指南
 | 草稿被覆盖 | 草稿在 polish 期间被用户改了 | CAS 拒绝覆盖, 重试时用最新草稿 |
 | TRACE 太大 | 没设置 pageSize 限制 | 设置页可关 / 设保留天数 |
 | slots 注入失败 (console.warn) | DSH 启动顺序 race | 正常降级, 主壳照常加载, ✨ 与设置页暂时不可见 |
+
+## 前置依赖
+
+**必装**: `omdsh-dev/DSH-better-sidebar` (>=0.16.1)
+
+本插件 0.0.20+ 的「点 ✨ → 侧栏对话打磨」主流程强依赖 better-sidebar。better-sidebar 缺失或版本低于 0.16.1 时, 插件**会显式报错**（不静默兑底到单次 polish 路径——这违背产品决策, 见 `docs/decisions.md` §1 选型）。
+
+```bash
+dsh plugin --profile web add github:omdsh-dev/DSH-better-sidebar
+sudo systemctl restart dsh-web
+# 装完验证
+dsh --profile web --dump-config | grep better-sidebar
+```
+
+**非必装但推荐**: 若 better-sidebar 不可用, `/api/polish` 单次路径仍可工作 (直接调 LLM, 不经侧栏); 此时适合 headless / 自动化场景, 但失去多轮打磨能力。
