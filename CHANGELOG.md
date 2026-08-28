@@ -22,3 +22,14 @@
 - 引入 `~/.dsh/sessions` 全域扫描（24h 窗口内），替代单目标模式
 - 持久化事件流判定状态:interrupted / network-stopped / completed / settled
 - 详见 `docs/decisions.md` §2
+
+## 2026-08-27 ~13:00 — v0.0.10~v0.0.13 三档降级链
+- full → partial(readSurface) → none(裸草稿) 三档降级链引入
+- strictFull 可硬失败
+- 8/27 13:08 incident 修复: client.bundle.js 56K 重复 bug → 回滚 + 加 preflight 关 3 防回归
+- 详见 `运维/npp-incident-report-2026-08-27.md` (历史归档)
+
+## 2026-08-27 ~14:48 — v0.0.13-now slots 服务防御
+- 两处 `ctx.slots.inject` 加 try/catch 包裹（slots 服务未就位时仅 warn 一行）
+- features: "slots service unavailable at boot" 字符串 2 处
+- 8/27 incident 14:48 修复闭合
