@@ -113,3 +113,14 @@ docs/sidebar-integration.md  联动层集成指南
 - **Preflight**: `bash scripts/preflight.sh` (build 前 4 关: 语法 / 大小无异常翻倍 / 单一 __ModuleLoader__.load / 核心防御未丢)
 - **端到端**: DSH web 装上 plugin → 主框输入草稿 → 点 ✨ → 侧栏对话弹出 → Agent 打磨 → 手动复制回填
 - **回归**: 8/27 incident 教训——client.bundle.js 56K 重复 bug, 由 preflight 关 3 (单一 `__ModuleLoader__.load`) 防回归; 关 4 守 slots 服务防御
+
+## 故障排查
+
+| 现象 | 可能原因 | 处置 |
+|---|---|---|
+| 点 ✨ 没反应 | better-sidebar 未装 / 版本 < 0.16.1 | 装 omdsh-dev/DSH-better-sidebar, 版本升到 0.16.1+ |
+| 侧栏对话弹出但 Agent 不响应 | 主会话 agent 不在线 / preset 未选 | 切回主会话, 在 Settings 选 preset |
+| 提示词无变化 | strictFull=true 但会话非 live | 改 strictFull=false (允许降级到 partial/none) |
+| 草稿被覆盖 | 草稿在 polish 期间被用户改了 | CAS 拒绝覆盖, 重试时用最新草稿 |
+| TRACE 太大 | 没设置 pageSize 限制 | 设置页可关 / 设保留天数 |
+| slots 注入失败 (console.warn) | DSH 启动顺序 race | 正常降级, 主壳照常加载, ✨ 与设置页暂时不可见 |
