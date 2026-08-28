@@ -106,3 +106,10 @@ docs/sidebar-integration.md  联动层集成指南
 | 客户端 | `src/client.bundle.js` | PolishButton + PolishSettings + SidebarBridge + moduleStartInteractivePolish |
 
 构建流程: `src/*.js` → `scripts/build.mjs` 直拷 → `lib/*.js` (md5 一致; 用 `scripts/preflight.sh` 防回归)。
+
+## 测试策略
+
+- **单元测试**: `node --test tests/unit.test.mjs` (24 用例, 全绿)
+- **Preflight**: `bash scripts/preflight.sh` (build 前 4 关: 语法 / 大小无异常翻倍 / 单一 __ModuleLoader__.load / 核心防御未丢)
+- **端到端**: DSH web 装上 plugin → 主框输入草稿 → 点 ✨ → 侧栏对话弹出 → Agent 打磨 → 手动复制回填
+- **回归**: 8/27 incident 教训——client.bundle.js 56K 重复 bug, 由 preflight 关 3 (单一 `__ModuleLoader__.load`) 防回归; 关 4 守 slots 服务防御
