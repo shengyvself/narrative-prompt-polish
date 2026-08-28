@@ -89,3 +89,20 @@ tests/unit.test.mjs     24 例单测（node --test）
 docs/decisions.md       三家对比决策记录
 docs/sidebar-integration.md  联动层集成指南
 ```
+## 架构概览
+
+本插件按职责划分为以下子层:
+
+| 层 | 文件 | 职责 |
+|---|---|---|
+| 入口 | `src/index.js` | DSH host 半边挂载点 + trust fence 围栏 |
+| API 路由 | `src/api.js` | `/api/polish` `/api/config` `/api/traces.recent` `/api/apply-report` 方法表 |
+| 上下文 | `src/context-assembler.js` | C 方案: deriveMessages + requestHeader 复刻 `[system]+[history]` |
+| 表面 | `src/surface-fold.js` | partial 降级时 readSurface 读近期对话 |
+| 意图 | `src/intent.js` | 4 类意图骨架: debug / implement / explain / chat |
+| 流组装 | `src/polish.js` | 拼请求 + 调 ctx.llm.stream + 清洗 |
+| Trace | `src/trace-recorder.js` | 每次调用追加 JSONL 到 `lore/traces/prompt-polish/YYYY-MM-DD.jsonl` |
+| 错误细分 | `src/wire.js` + `src/api.js` | rejected / no-session / route-unavailable / stream-failed / empty-result / context-fallback / settings-unavailable |
+| 客户端 | `src/client.bundle.js` | PolishButton + PolishSettings + SidebarBridge + moduleStartInteractivePolish |
+
+构建流程: `src/*.js` → `scripts/build.mjs` 直拷 → `lib/*.js` (md5 一致; 用 `scripts/preflight.sh` 防回归)。
