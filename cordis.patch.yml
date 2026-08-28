@@ -1,0 +1,9 @@
+# narrative-prompt-polish 模块 cordis 段（并入大插件组合 patch 时保持独立段）。
+# host 半边挂 /narrative-prompt-polish/api 前缀路由；client 半边在输入框右座渲染 ✨ 按钮。
+# config 段为静态基座（settings 服务缺位时唯一配置来源），字段见 src/config.js DEFAULTS。
+- insert:
+    - id: narrative-prompt-polish
+      name: 'narrative-prompt-polish'
+      config:
+        contextMode: 'full'
+        intentEnabled: true

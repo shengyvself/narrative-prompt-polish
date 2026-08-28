@@ -1,0 +1,6 @@
+node_modules/
+*.bak
+*.bak-*
+*.broken-*
+*.log
+DESIGN-private-notes.md

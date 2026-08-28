@@ -1,0 +1,61 @@
+{
+  "name": "narrative-prompt-polish",
+  "version": "0.0.26",
+  "description": "Shengyv Writing Architecture 提示词优化：主框 ✨ 一键意图感知改写；C 方案复刻完整会话命中 prompt cache；CAS 写回；trace 落盘；sidebar 事件总线联动",
+  "type": "module",
+  "license": "MIT",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-slots",
+        "@deepseek-ai/dsh-client-ui-conversation",
+        "@deepseek-ai/dsh-client-ui-settings"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test tests/unit.test.mjs"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "narrative-studio",
+    "prompt-polish",
+    "writing-architecture"
+  ],
+  "peerDependencies": {
+    "@deepseek-ai/cordis": ">=4.0.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shengyvself/narrative-prompt-polish.git"
+  },
+  "bugs": {
+    "url": "https://github.com/shengyvself/narrative-prompt-polish/issues"
+  },
+  "homepage": "https://github.com/shengyvself/narrative-prompt-polish#readme",
+  "files": [
+    "lib",
+    "src",
+    "tests",
+    "docs",
+    "scripts",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ]
+}
