@@ -33,3 +33,9 @@
 - 两处 `ctx.slots.inject` 加 try/catch 包裹（slots 服务未就位时仅 warn 一行）
 - features: "slots service unavailable at boot" 字符串 2 处
 - 8/27 incident 14:48 修复闭合
+
+## 2026-08-27 ~16:00 — v0.0.14~v0.0.18 侧栏联动
+- moduleStartInteractivePolish 流程引入: openTab(autoCreate) + 轮询 getTabs 捕获新 threadId
+- sidechat.prompt 投递任务书
+- layout.toggleSidebar 强制展开侧栏
+- 任务书加「【作者验证提示】」指令：让模型第一轮回复开头复述继承背景
