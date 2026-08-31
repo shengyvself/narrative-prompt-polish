@@ -1,5 +1,5 @@
 /**
- * surface-fold.js — readSurface 事件的过滤折叠（Max-Null context.ts 血统，纯函数）。
+ * surface-fold.js — readSurface 事件的过滤折叠（纯函数）。
  * 只保留人类 user/message 与 assistant/message 文本；跳过 plugin/skill-catalog 来源
  * 与 tool/result 派生噪音。
  */

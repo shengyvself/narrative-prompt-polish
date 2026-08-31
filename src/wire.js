@@ -1,5 +1,5 @@
 /**
- * wire.js — JSON 信封与 HTTP 小工具（Max-Null baseline 第 4 层）。
+ * wire.js — JSON 信封与 HTTP 小工具。
  * 信封统一为 { ok: true, value } | { ok: false, error: { code, message } }。
  */
 

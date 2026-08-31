@@ -1,5 +1,5 @@
 /**
- * polish.js — 流组装与输出清洗（Max-Null assembleText + LCQ stripWrapper 合体）。
+ * polish.js — 流组装与输出清洗。
  * 全部纯函数，node --test 直测，不需要 cordis 运行时。
  */
 
@@ -29,7 +29,7 @@ export async function assembleText(chunks) {
 }
 
 /**
- * 去 ``` 围栏与「优化后的提示词：」类前缀（LCQ stripWrapper）。
+ * 去 ``` 围栏与「优化后的提示词：」类前缀。
  * @param {string} text
  */
 export function stripWrapper(text) {
@@ -61,7 +61,7 @@ export function extractUsage(usage) {
 
 /**
  * partial 模式的 user message 组装：上下文块在前（明确标注仅背景），草稿殿后
- * （draft-last attention，Max-Null buildPolishPrompt 血统）。
+ * （draft-last attention：草稿在指令之前、两者都在末尾，最强注意力区）。
  * @param {string} context composeContext 的产物（"" 表示无上下文）
  * @param {string} draft 已裁剪的草稿
  */

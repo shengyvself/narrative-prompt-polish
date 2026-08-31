@@ -71,7 +71,7 @@ test("polish: assembleText 把 error/aborted 记为失败", async () => {
   assert.equal(r.failed, true)
 })
 
-// ── surface 过滤（Max-Null 第 3 层）──
+// ── surface 过滤 ──
 test("surface-fold: 只留人类 user 与 assistant 文本", async () => {
   const sf = await load("surface-fold")
   const segs = sf.extractSegments([

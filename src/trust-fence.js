@@ -1,8 +1,8 @@
 /**
- * trust-fence.js — 浏览器信任围栏（Max-Null baseline 第 1 层）。
+ * trust-fence.js — 浏览器信任围栏。
  * 行为对齐 DSH /api 网关围栏：Host 为 loopback 或连接行 trustedHosts 条目即放行；
  * sec-fetch-site: cross-site 与跨源 Origin 拒绝。这是 DNS-rebinding / 跨站防御，
- * 不是身份认证。（移植自 Max-Null dsh-draft-polish trust-fence.ts，MIT）
+ * 不是身份认证。
  */
 
 /**

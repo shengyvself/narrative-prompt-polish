@@ -55,7 +55,6 @@
     "scripts",
     "cordis.patch.yml",
     "README.md",
-    "LICENSE",
-    "NOTICE"
+    "LICENSE"
   ]
 }

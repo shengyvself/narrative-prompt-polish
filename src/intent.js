@@ -1,5 +1,5 @@
 /**
- * intent.js — 4 类意图骨架（采纳 LCQ-1024 核心，设计文档 §IntentRouter）。
+ * intent.js — 4 类意图骨架（设计文档 §IntentRouter）。
  * 本地正则预分类选骨架；骨架既用于 partial/none 模式的 system prompt，
  * 也用于 full 模式末尾的润色指令文本。
  */
@@ -19,7 +19,7 @@ export const INTENT_SIGNALS = /** @type {Record<Intent, RegExp[]>} */ ({
   chat: []
 })
 
-/** LCQ 血统的共享重写规则：所有骨架共用，保证「优化」有实际动作。 */
+/** 共享重写规则：所有骨架共用，保证「优化」有实际动作。 */
 const SHARED_RULES = [
   '',
   '重写时必须遵守：',
@@ -32,7 +32,7 @@ const SHARED_RULES = [
 
 /**
  * 4 套系统提示词骨架：partial / none 模式的 system 来源。
- * 结构对齐 LCQ DEFAULT_SYSTEM_PROMPT 的四分类组织法。
+ * 4 类意图：debug / implement / explain / chat。
  */
 export const INTENT_SYSTEM_PROMPTS = /** @type {Record<Intent, string>} */ ({
   debug: [
@@ -64,7 +64,7 @@ export const INTENT_SYSTEM_PROMPTS = /** @type {Record<Intent, string>} */ ({
   ].join('\n'),
 })
 
-/** intentEnabled=false 时的单一 system prompt（Max-Null POLISH_SYSTEM 血统 + LCQ 共享规则）。 */
+/** intentEnabled=false 时的单一 system prompt（含共享重写规则）。 */
 export const SINGLE_SYSTEM_PROMPT = [
   '你是一位中文写作助手，擅长把用户组织得不够通顺的草稿改写成清晰、具体、可直接交给 AI 助手处理的消息。',
   '输出要求：',

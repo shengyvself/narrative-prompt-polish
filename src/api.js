@@ -1,6 +1,6 @@
 /**
  * api.js — API 方法表（polish / config / config.get / config.update / traces.recent）。
- * polish 主流程：校验（peterliucius rejected 族）→ 意图分类（LCQ 骨架）→ 上下文探测链
+ * polish 主流程：校验（rejected 族）→ 意图分类（4 类骨架）→ 上下文探测链
  * （C 方案 full → partial → none）→ llm.stream 直调（不挂会话调度）→ 清洗 → trace。
  */
 import { PolishError, optionalString } from "./wire.js"
@@ -98,7 +98,7 @@ async function polishOnce(ctx, getConfig, traceOpts, payload) {
   const mergeSidebar = record.mergeSidebarContext === true || (config.mergeSidebarContextByDefault && record.mergeSidebarContext !== false)
   const sidebarText = typeof record.sidebarContext === "string" ? record.sidebarContext : null
 
-  // ── 前置校验（rejected 细分，peterliucius 血统）──
+  // ── 前置校验（rejected 细分）──
   if (draft0.trim() === "") throw new PolishError("rejected", "草稿没有可见字符", 400, "empty")
   if (draft0.includes(CHIP_PLACEHOLDER)) throw new PolishError("rejected", "含引用 chip 的草稿暂不支持润色", 400, "references")
   if (draft0.length > config.maxInputChars) {
@@ -121,7 +121,7 @@ async function polishOnce(ctx, getConfig, traceOpts, payload) {
   // ── 模型路由解析：显式 > 会话 header 继承（full）> 客户端传入 > 配置默认 ──
   let provider = config.provider || assembled.provider || optionalString(payload, "provider")
   let model = config.model || assembled.model || optionalString(payload, "model")
-  // 最后兜底：DSH 全局 agentDefaultModel 服务（peterliucius 血统）——开箱即用。
+  // 最后兜底：DSH 全局 agentDefaultModel 服务——开箱即用。
   let admDebug = ""
   if (provider === "" && ctx.get && typeof ctx.get === "function") {
     try {
@@ -162,7 +162,7 @@ async function polishOnce(ctx, getConfig, traceOpts, payload) {
     }
     system = assembled.system
   } else {
-    // partial / none：意图骨架作为 system（LCQ 模式），草稿在 user 尾部。
+    // partial / none：意图骨架作为 system，草稿在 user 尾部。
     system = config.intentEnabled ? INTENT_SYSTEM_PROMPTS[intent] : SINGLE_SYSTEM_PROMPT
     messages.push(userMessage(buildPartialUserPrompt(assembled.contextBlock || "", draft)))
   }

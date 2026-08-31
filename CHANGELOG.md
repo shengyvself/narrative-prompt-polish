@@ -15,7 +15,7 @@
 ## 2026-08-26 — polish 0.0.5~0.0.7（事件密集期；详情见维护会话 §十七与本模块外发 incident report）
 
 ## 2026-08-26 ~22:00 — v0.0.5~v0.0.7（事件密集期）
-- 5 层工程 baseline 选型完成：trust-fence (Max-Null) / 4 类意图骨架 (LCQ-1024) / CAS 写回 (peterliucius) 三家并取
+- 子层划分定型：trust-fence / 4 类意图骨架 / CAS 写回 / wire 信封 / 失败降级
 - 详见 `docs/decisions.md`
 
 ## 2026-08-27 ~10:30 — v0.0.9 全域扫描
