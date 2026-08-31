@@ -2,6 +2,15 @@
 
 格式：YYYY-MM-DD HH:MM — 一句话描述
 
+## 2026-08-31 — v0.0.27 上游归属清理
+- 全文档/源码移除 Max-Null / LCQ-1024 / peterliucius 归属表述与 5 层 baseline / 三家并取段落
+- README 重写：去掉「与三家上游的关系」表 + Credits 段
+- NOTICE 整文件删除；package.json `files` 数组同步去掉
+- decisions.md 重写为纯内部设计取舍（不再附上游对比）
+- CHANGELOG 0.0.5-0.0.7 条目改为「子层分解定型」
+- src/* 注释去掉「血统」「baseline」「同款」等归属词；技术名词（trust-fence / readSurface / CAS / 意图骨架）保留
+- 0 行为变更；preflight + build 通过
+
 ## 2026-08-27 14:25 — preflight + 已知能跑状态封存
 - scripts/preflight.sh：build 前必过三关（语法 / 文件大小无异常翻倍 / 单一 __ModuleLoader__.load 顶层调用），失败 exit 1
 - scripts/build.mjs 顶部接入 preflight；任何 ship 必先自检
