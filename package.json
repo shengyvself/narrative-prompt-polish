@@ -1,6 +1,6 @@
 {
   "name": "narrative-prompt-polish",
-  "version": "0.0.27",
+  "version": "0.1.0",
   "description": "Shengyv Writing Architecture 提示词优化：主框 ✨ 一键意图感知改写；C 方案复刻完整会话命中 prompt cache；CAS 写回；trace 落盘；sidebar 事件总线联动",
   "type": "module",
   "license": "MIT",

@@ -2,6 +2,28 @@
 
 格式：YYYY-MM-DD HH:MM — 一句话描述
 
+## 2026-08-31 — v0.1.0 首个语义化里程碑：侧栏润色链路可靠性修复
+
+- **{{model}} 装配失败修复（2026-08-31 两轮）**：侧栏润色（sidechat.start 链路）在父会话被
+  dsh-autoresume 冷恢复（其 resume 不传 agentOptions → 父 options 为空）后，子代理继承
+  `{...parent.options}` 空对象 → 首轮装配报 `prompt variable "{{model}}" has no value
+  (section "deployment:persona")`，润色任务无法执行。
+  - 根因：`{{model}}` 主来源为 dsh-agent-loop 全局变量 `ctx.agent?.options.model`
+    （dsh-agent-loop 1024-1026 行）；sidechat 路径不装 installModelSelection，纯靠 options。
+  - 修复（集成层，本插件源码 0 改动）：better-sidebar 新增 `resolveChildAgentOptions`
+    （父 options 缺 provider/model 时用部署默认模型补齐，descriptor 同步）+ `sidechat.prompt`
+    冷恢复补 `agentOptions`（`resolveThreadAgentOptions`：优先取持久化 descriptor 路由，
+    回退部署默认）；dsh-autoresume `resumeSession` 补 `agentOptions`（根除父会话空 options 复发）。
+  - 验证：E2E 修复前复现（sidechat.start 子线程同错）→ 修复后原失败线程重试
+    turn 8 `completed` 并产出润色结果；新线程首轮 request/header 带
+    tokenrhythm/deepseek-v4-flash-0731；dsh-web 重启 Result=success、3 连测 200；
+    node --check ×2 / autoresume build.mjs 通过。
+- **版本语义**：0.0.x 系列收敛为 0.1.0——核心功能与链路定型（主框 ✨ → 侧栏打磨主流程、
+  C 方案 prompt-cache、意图骨架、CAS 写回、trace 落盘），本版本含集成链路可靠性修复。
+- **行为变更**：0（无 API/配置/流程变化）。上游集成注意事项：集成层补丁记录
+  `PATCH-record-20260831-better-sidebar-model-var.md`（better-sidebar /
+  dsh-autoresume 升级后需按记录重打补丁）。
+
 ## 2026-08-31 — v0.0.27 上游归属清理
 - 全文档/源码移除 Max-Null / LCQ-1024 / peterliucius 归属表述与 5 层 baseline / 三家并取段落
 - README 重写：去掉「与三家上游的关系」表 + Credits 段
