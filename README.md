@@ -50,6 +50,16 @@ dsh plugin --profile web add ./narrative-prompt-polish
 安装后重启 DSH Web 即生效。依赖 better-sidebar（侧栏对话打磨主流程）；默认配置开箱即用
 （模型跟随当前会话；trace 写入 `<cwd>/lore/traces/prompt-polish/`，可在设置页改为绝对路径锚定你的工作区）。
 
+## 版本历史
+
+| 版本 | 日期 | GitHub 发布 | 要点 |
+|---|---|---|---|
+| v0.0.26 | 2026-08-28 | ✅ Release+tgz | 对外首发 |
+| v0.0.27 | 2026-08-31 | ✅ Release+tgz | 文档与注释清理（上游归属清理，无行为变更） |
+| v0.1.0 | 2026-08-31 | ✅ Release+tgz | 首个语义化里程碑：侧栏润色链路可靠性修复 |
+
+> **早期版本说明**：内部演进 0.0.5 ~ 0.0.25 仅记于 `CHANGELOG.md`，**从未对外发布**（对外首发即 v0.0.26），GitHub 无对应 tag/Release。可下载的正式版本以 [Releases](https://github.com/shengyvself/narrative-prompt-polish/releases) 为准。
+
 ## License
 
 本项目以 [MIT](./LICENSE) 发布。
