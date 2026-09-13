@@ -1,73 +1,62 @@
-# sidebar 联动层集成指南
+# 事件总线契约（联动层集成指南）
 
-本插件的 DSH-better-sidebar 联动层是**松耦合**的：不 import、不调用 better-sidebar 的任何
-内部 API，只依赖两个公开契约——DOM 标记与 CustomEvent 事件总线。
+> 0.2.0（2026-09-13）：本插件的 **主路径已改为「点 ✨ → 内核原生可对话子代理」**，
+> 事件总线只服务**单次 polish**（外部模块触发的代跑 + CAS 回写）。
+> 旧版的 better-sidebar 宿主扫描与悬浮 ✨ 按钮层已随 better-sidebar 一并移除。
 
-## 依赖契约
-### 1. DOM 标记（只读）
-| 标记 | 含义 | 来源 |
-|---|---|---|
-| `[data-dsh-better-sidebar]` | sidebar 宿主元素（body 直接子级） | better-sidebar index.tsx mount() |
-| `textarea` / `[contenteditable="true"]`（宿主内） | 可观察输入框 | 通用 DOM |
+## 契约（两件事）
 
-插件只**读取**这些标记做扫描与定位；悬浮 ✨ 按钮挂在插件自有层：
-`body > div.npp-float-layer[data-npp-float-layer]`（fixed，pointer-events 分层），按目标
-`getBoundingClientRect()` 定位右上角，绝不修改 better-sidebar 的 React 树。
-
-### 2. 事件总线（双向）
-| 事件方向 | 事件名 | detail 字段 |
+### 1. 事件总线（双向，window CustomEvent）
+| 方向 | 事件名 | detail 字段 |
 |---|---|---|
 | 触发 → 插件 | `narrative:prompt-polish:trigger` | `{ triggerSource, draft?, targetElement? }` |
-| 插件 → 结果 | `narrative:prompt-polish:result` | `{ triggerSource, text, intent, contextMode, applied, reason?, error?, targetElement }` |
+| 插件 → 结果 | `narrative:prompt-polish:result` | `{ triggerSource, text?, intent?, contextMode?, applied, reason?, error?, targetElement? }` |
 
+- 带 `targetElement`：本插件代跑 `POST /api/polish`（单次直调，**不占用子代理**），
+  回写前对 target 做 CAS 比对（`readTarget(target) === draft`）；一致才写入，不一致则
+  `applied=false, reason="changed"`，绝不覆盖用户输入。
+- 不带 `targetElement`：只广播 result（此时无回写，模块自理）——本层在无目标时不动作。
 - `triggerSource` 约定：`main` / `sidebar:qa` / `sidebar:terminal` / `sidebar:file-viewer` /
-  `sidebar:<自定义>`；bridge 会从 target 所在 tabpanel 推断（term→terminal、editor/diff/file→file-viewer、chat/qa/ask→qa），推断失败 `sidebar:auto`。
-- trace 记录每次调用的 triggerSource。
+  `sidebar:<自定义>`；trace 记录每次调用的 triggerSource。
 
-## 你的模块如何接入（三种姿势）
-### 姿势 A：什么都不做（零接入）
-sidebar 输入框会自动出现 ✨ 悬浮按钮；点击后插件直接把润色结果回写该输入框
-（native value setter + input 事件，React 受控组件兼容）。设置页可关
-`sidebarFloatingButtonEnabled`。
+### 2. 回写目标（DOM，可选）
+`targetElement` 需是 `<textarea>` / `<input>` / `contenteditable`：
+- 表单元素走 native setter + `input` 事件（React 受控组件兼容）；
+- `contenteditable` 走 Selection + `execCommand("insertText")`，失败退 `textContent` 直写
+  （可能丢富文本格式）。
+
+## 三种接入姿势
+### 姿势 A：什么都不做
+主框 ✨ 自动可用（主路径＝子代理打磨，与本总线无关）。
 
 ### 姿势 B：订阅结果事件（自定义回写逻辑）
 ```js
 window.addEventListener("narrative:prompt-polish:result", (e) => {
   const d = e.detail;
-  if (d.triggerSource !== "sidebar:my-panel" || !d.applied) return;
-  myPanel.setDraft(d.text);   // 用你自己的状态通道回写
+  if (d.triggerSource !== "my-panel" || !d.applied) return;
+  myPanel.setDraft(d.text);
 });
 ```
-广播 trigger 时**不带** `targetElement` 即为纯信号模式——bridge 只代跑 polish 与广播，不碰你的 DOM：
-```js
-window.dispatchEvent(new CustomEvent("narrative:prompt-polish:trigger", {
-  detail: { triggerSource: "sidebar:my-panel", draft: currentDraft },
-}));
-```
 
-### 姿势 C：带 targetElement 委托 bridge 全托管
+### 姿势 C：带 targetElement 委托代跑（单次直调 + CAS + 回写）
 ```js
 window.dispatchEvent(new CustomEvent("narrative:prompt-polish:trigger", {
-  detail: { triggerSource: "sidebar:my-panel", draft, targetElement: myTextarea },
+  detail: { triggerSource: "my-panel", draft: currentDraft(), targetElement: myTextarea },
 }));
-// bridge 负责：polish 调用 → CAS（回写前比对 readTarget）→ 回写 → 广播 result
 ```
 
 ## 配置项
 | 键 | 默认 | 说明 |
 |---|---|---|
-| `sidebarFloatingButtonEnabled` | true | 关闭后 bridge 完全停摆（observer 断开、按钮移除） |
-| `mergeSidebarContextByDefault` | false | 开启后 polish 请求附带 target 所在面板文本（≤400 字符）作 `<sidebar-context>` |
+| `mergeSidebarContextByDefault` | false | 开启后单次 polish 请求附带 target 所在面板文本（≤400 字符）作 `<sidebar-context>` |
+| `sidebarFloatingButtonEnabled` | false | **0.2.0 起无行为**（悬浮按钮层已移除），键保留仅为兼容已存设置文档 |
 
-## 失败语义（联动失败不影响主流程）
-- better-sidebar 未挂载：扫描空转，等 MutationObserver 下一次通知；主框按钮不受影响。
-- 目标元素在润色期间被卸载：result 仍广播，applied=false。
-- CAS 不通过（用户改了草稿）：applied=false + reason="changed"，不覆盖用户输入。
-- grabSidebarContext 抓不到面板文本：字段缺省，polish 正常进行。
+## 失败语义（联动失败不影响主路径）
+- 目标元素在润色期间被卸载：result 仍广播，`applied=false`。
+- CAS 不通过（用户改了草稿）：`applied=false` + `reason="changed"`，不覆盖用户输入。
+- 抓不到面板文本：字段缺省，polish 正常进行。
+- 同一 target 新触发会 abort 上一个（inflight supersession）。
 
 ## 已知边界
-- 终端 PTY 输入框（xterm.js）不是 textarea，无法被扫描——对终端输出选中内容的润色需
-  better-sidebar 未来暴露 selection slot 后以姿势 B 接入。
-- contenteditable 回写走 Selection + execCommand("insertText")，execCommand 不可用时退
-  textContent 直写（可能丢富文本格式，纯文本输入框无感）。
-- 多个输入框同时触发按各自 inflight 串行保护；同一框新触发会 abort 前一个。
+- 终端 PTY 输入框（xterm.js）不是 textarea，无法被回写；对终端输出选中内容的润色需
+  以姿势 B 接入。

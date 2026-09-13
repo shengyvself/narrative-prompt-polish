@@ -17,12 +17,18 @@ export const DEFAULTS = {
   intentEnabled: true,        // 4 类意图骨架开关
   draftPosition: 'last',      // last=草稿在消息末尾（attention 最强位）| system=意图指令进 system
 
+  // ── 主路径：可对话子代理（0.2.0 取代 better-sidebar sidechat）──
+  // fork＝子代理 seed 主会话已完成轮并继承父 Agent（provider/model/预设）——默认；
+  // spawn＝全新子代理（不继承会话上下文）。
+  subagentProvider: 'fork',
+
   // ── 联动配置 ──
-  // 0.0.25：默认停用 sidebar 浮按钮（用户 0.0.15 收口：仅主框 ✨；侧栏对话上线后浮按钮会
-  // 出现在 sidechat 输入框旁，与收口意图冲突）。配置项保留向后兼容。
+  // 0.2.0：悬浮按钮层已随 better-sidebar 一并移除（该服务在 0.1.5 本部署不存在）；
+  // 键保留仅为兼容已存储的设置文档（settings.yaml 中已有该键），不再有任何行为。
   sidebarFloatingButtonEnabled: false,
   mergeSidebarContextByDefault: false,
   sidebarTriggerSources: ['sidebar:qa', 'sidebar:terminal', 'sidebar:file-viewer', 'sidebar:text-editor', 'sidebar:auto'],
+  // 注：sidebarTriggerSources 与 mergeSidebarContextByDefault 仍由 CustomEvent 总线路径使用。
 
   // ── 模型 ──
   provider: '',               // 空 = 继承会话（requestHeader().config 或客户端 resolveModel）

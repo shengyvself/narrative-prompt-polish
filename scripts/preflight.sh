@@ -15,7 +15,9 @@ for f in src/*.js; do
 done
 [ "$fail" -eq 0 ] && echo "OK 关1: 语法" || exit 1
 
-PREV_BYTES=34546
+# 0.2.0（2026-09-13）：bundle 由 855 行/47K 收敛到「删 better-sidebar 链路 + 薄事件总线」后的体量，
+# 基线随之更新（仍守「无异常翻倍」语义）。
+PREV_BYTES=32950
 CUR_BYTES=$(stat -c %s src/client.bundle.js)
 python3 -c "CUR=$CUR_BYTES; PREV=$PREV_BYTES; import sys; r=CUR/PREV; sys.exit(0 if (0.7<=r<=1.5) else 1)"
 if [ $? -ne 0 ]; then
@@ -37,7 +39,7 @@ echo "OK preflight 通过, 可 build"
 
 # gate 4（0.0.26：BUNDLE 改 $M 相对路径——原写死本机绝对路径，clone 后他人/CI 必失败且泄漏本机路径）
 BUNDLE="$M/src/client.bundle.js"
-for guard in "ctx.connection:1" "ctx.slots:2" "slots service unavailable at boot:2"; do
+for guard in "ctx.sessions:2" "ctx.slots:2" "slots service unavailable at boot:2" "startPolishSubagent:2" "api.polishStart:1"; do
   pat="${guard%:*}"
   need="${guard##*:}"
   have=$(grep -c "$pat" "$BUNDLE" || true)
@@ -47,3 +49,13 @@ for guard in "ctx.connection:1" "ctx.slots:2" "slots service unavailable at boot
   fi
 done
 echo "OK 关4: 核心防御未丢"
+
+# gate 5（0.2.0 新增）：反守卫——better-sidebar 耦合必须彻底清零（旧 inject 会让 apply 永不执行）
+for banned in "ctx.betterSidebar" "betterSidebar" "sidechat.start"; do
+  have=$(grep -c "$banned" "$BUNDLE" || true)
+  if [ "$have" -ne 0 ]; then
+    echo "X 残留 better-sidebar 耦合: $banned 出现 $have 次"
+    exit 1
+  fi
+done
+echo "OK 关5: better-sidebar 耦合为 0"

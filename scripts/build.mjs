@@ -15,7 +15,7 @@ await mkdir(new URL("../lib", import.meta.url), { recursive: true })
 await cp(new URL("../src/index.js", import.meta.url), new URL("../lib/index.js", import.meta.url))
 await cp(new URL("../src/client.bundle.js", import.meta.url), new URL("../lib/client.js", import.meta.url))
 // 服务端子模块随行（index.js 相对导入它们）。
-for (const f of ["config.js", "wire.js", "trust-fence.js", "intent.js", "polish.js", "surface-fold.js", "context-assembler.js", "trace-recorder.js", "api.js"]) {
+for (const f of ["config.js", "wire.js", "trust-fence.js", "intent.js", "polish.js", "surface-fold.js", "context-assembler.js", "trace-recorder.js", "taskbook.js", "api.js"]) {
   await cp(new URL("../src/" + f, import.meta.url), new URL("../lib/" + f, import.meta.url))
 }
 const copied = await readdir(new URL("../lib", import.meta.url))

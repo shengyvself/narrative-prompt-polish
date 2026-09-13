@@ -43,7 +43,8 @@
 - 落盘到 `lore/traces/prompt-polish/YYYY-MM-DD.jsonl`，与 lore 系统对齐可被 narrative 工具分析。
 - hash 截断 sha256 前 16 位存指纹不存全文（上下文可能含敏感代码）；cacheHit 从 `usage.prompt_cache_hit_tokens` 尽力提取。
 
-## 11. sidebar 联动：slot 缺失的现实
+## 11. sidebar 联动：slot 缺失的现实（**0.2.0 起部分作废，见 §13**）
+> 2026-09-13：宿主扫描与悬浮按钮层已随 better-sidebar 一并移除；本条只保留**事件总线**契约。
 - 实测 better-sidebar 仅暴露 `conversation.chat.turnTail` / `settings.section`，无 floating-tools slot → 走 B 方案：MutationObserver 扫描宿主内的 textarea/[contenteditable]。
 - 悬浮按钮挂插件自有 fixed 层（body 直挂 `data-npp-float-layer`），按 getBoundingClientRect 定位——不修改 DSH DOM，规避 React reconciliation 冲突。
 - 通信 CustomEvent 总线（trigger/result），外部模块可不带 targetElement 广播 trigger 自理回写，或带 targetElement 由 bridge 代跑 CAS+回写。
@@ -52,3 +53,22 @@
 - fence：Host loopback 或连接行 trustedHosts；cross-site/跨源 origin 拒绝（DNS rebinding 防御，非认证）。
 - 会话只读：deriveMessages/requestHeader/readSession/readSurface 全部只读投影；llm.stream 无 sessionId 参数——物理上不可能污染主会话历史。
 - 密钥零接触：provider/model 继承自会话 header 或用户显式配置，无任何凭据读写。
+
+## 13. 主路径宿主迁移：better-sidebar sidechat → 内核原生子代理（2026-09-13，0.2.0）
+- **背景**：0.0.20 起主流程是「点 ✨ → better-sidebar 的 sidechat 子会话」。但 better-sidebar 已
+  从本部署架构移除（0.1.5 起右侧栏面板一律走官方 keyed 槽位；better-sidebar 自身 `disabled`），
+  其服务 `ctx.betterSidebar` 永久缺位——旧客户端 `inject` 里含 `betterSidebar`，
+  cordis 注入守卫会让 `apply` **永不执行**（主框 ✨ 与设置面板都不注册）。
+- **候选与取舍**：① 自研右侧栏聊天面板＝重写官方 ChatView（否决，重复造轮子）；
+  ② 原生**会话分叉**（`ctx.sessions.fork`）＝真实顶层会话（用户裁决：不要，选子代理语义）；
+  ③ **内核原生 continuable 子代理**（采纳）。
+- **采纳方案**：`ctx.subagents.startContinuable({ provider: 'fork', request: { parent, prompt } })`。
+  fork provider（`dsh-subagent-fork-in-process`）`inheritsParentContext = true`：子代理 seed
+  母会话**已完成轮**（不含进行中的那一轮），并继承父 Agent 的 provider/model/推理档与预设；
+  `split` 语义与官方 `subagent_fork` 工具同源。
+- **为什么符合红线 9**：子代理不可用/主会话无 live agent/启动异常时**全部显式抛错**并 toast，
+  不回退到 `/api/polish` 单次直改。单次路径仍在，但只服务事件总线与 headless 场景。
+- **代价与边界**：需要母会话有 live Agent（agent 被回收时点 ✨ 会报 no-live-agent）；
+  母会话无已完成轮时 fork 只给空 seed（子代理从零开始，不是错误）；
+  子代理是**子代理**（列在会话列表的「子代理」目录下），可被官方输入框继续对话（continuable
+  且 parentAvailable）。

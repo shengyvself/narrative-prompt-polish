@@ -274,3 +274,111 @@ test("api: partial 模式意图骨架进 system；full 指令在末尾且 system
   assert.equal(tail[0].content[0].text, "随便说说")
   assert.ok(tail[1].content[0].text.includes("<polish-request>"))
 })
+
+// ── taskbook（0.2.0 主路径：可对话子代理的任务书）──
+test("taskbook: 含草稿与本地意图判定；intentEnabled=false 时不附判定", async () => {
+  const tb = await load("taskbook")
+  const a = tb.buildPolishTaskbook("为什么这个报错", true)
+  assert.equal(a.intent, "debug")
+  assert.ok(a.text.includes("【润色任务书】"))
+  assert.ok(a.text.includes("为什么这个报错"))
+  assert.ok(a.text.includes("本地意图判定：debug"))
+  const b = tb.buildPolishTaskbook("为什么这个报错", false)
+  assert.equal(b.intent, "chat")
+  assert.ok(!b.text.includes("本地意图判定"))
+})
+
+// ── api：polish.start（主路径 = continuable 子代理；红线 9：失败显式抛错、不降级）──
+function fakeSubagentCtx() {
+  const calls = []
+  const ctx = {
+    agents: { get: (id) => (id === "s1" ? { id: "agent-1" } : undefined) },
+    subagents: {
+      getProvider: (name) => (name === "fork" || name === "spawn" ? { name } : undefined),
+      startContinuable: async (spec) => { calls.push(spec); return { childId: "session-child-1", messageId: "m-1" } },
+    },
+  }
+  ctx.__calls = calls
+  return ctx
+}
+async function buildStartEnv(configPatch, ctx) {
+  const apiMod = await load("api")
+  const cfgMod = await load("config")
+  const config = cfgMod.effectiveConfig(configPatch || {})
+  const dir = mkdtempSync(join(tmpdir(), "npp-start-"))
+  const api = apiMod.buildApi(ctx, () => config, { traceDir: dir, cwd: tmpdir() })
+  return { api, config, dir }
+}
+test("api.polish.start: 默认 fork provider + 任务书进首轮 prompt + 返回 childId + trace", async () => {
+  const ctx = fakeSubagentCtx()
+  const { api, dir } = await buildStartEnv({}, ctx)
+  const r = await api["polish.start"]({ sessionId: "s1", text: "帮我写一个导出脚本" })
+  assert.equal(r.ok, true)
+  assert.equal(r.childId, "session-child-1")
+  assert.equal(r.subagentProvider, "fork")
+  assert.equal(r.intent, "implement")
+  const spec = ctx.__calls[0]
+  assert.equal(spec.provider, "fork")
+  assert.equal(spec.request.parent.id, "agent-1")
+  assert.ok(spec.request.prompt[0].text.includes("帮我写一个导出脚本"))
+  assert.ok(spec.label.startsWith("✨ 提示词打磨："))
+  assert.ok(spec.signal instanceof AbortSignal)
+  const tr = await load("trace-recorder")
+  const lines = tr.recentTraces({ traceDir: dir, cwd: tmpdir() }, 10)
+  assert.equal(lines.length, 1)
+  assert.equal(lines[0].type, "subagent-start")
+  assert.equal(lines[0].childId, "session-child-1")
+  assert.equal(lines[0].messageId, "m-1")
+})
+test("api.polish.start: 请求级 provider 覆盖配置", async () => {
+  const ctx = fakeSubagentCtx()
+  const { api } = await buildStartEnv({ subagentProvider: "fork" }, ctx)
+  const r = await api["polish.start"]({ sessionId: "s1", text: "草稿", provider: "spawn" })
+  assert.equal(r.subagentProvider, "spawn")
+  assert.equal(ctx.__calls[0].provider, "spawn")
+})
+test("api.polish.start: 主会话无 live agent → no-live-agent（不降级到单次 polish）", async () => {
+  const ctx = fakeSubagentCtx()
+  const { api } = await buildStartEnv({}, ctx)
+  await assert.rejects(() => api["polish.start"]({ sessionId: "not-live", text: "草稿" }), e => e.code === "no-live-agent")
+  assert.equal(ctx.__calls.length, 0)
+})
+test("api.polish.start: 校验沿用 rejected 族；缺 sessionId → bad-request", async () => {
+  const ctx = fakeSubagentCtx()
+  const { api } = await buildStartEnv({}, ctx)
+  await assert.rejects(() => api["polish.start"]({ sessionId: "s1", text: "   " }), e => e.code === "rejected" && e.reason === "empty")
+  await assert.rejects(() => api["polish.start"]({ sessionId: "s1", text: "含引用\uFFFC" }), e => e.code === "rejected" && e.reason === "references")
+  await assert.rejects(() => api["polish.start"]({ text: "草稿" }), e => e.code === "bad-request")
+  assert.equal(ctx.__calls.length, 0)
+})
+test("api.polish.start: startContinuable 抛错 → subagent-failed（含原因）", async () => {
+  const ctx = fakeSubagentCtx()
+  ctx.subagents.startContinuable = async () => { throw new Error("boom") }
+  const { api } = await buildStartEnv({}, ctx)
+  await assert.rejects(() => api["polish.start"]({ sessionId: "s1", text: "草稿" }), e => e.code === "subagent-failed" && /boom/.test(e.message))
+})
+test("api.polish.start: subagents 服务缺失 / provider 未注册 → subagent-unavailable", async () => {
+  const noService = { agents: { get: () => ({ id: "a" }) } }
+  const a = await buildStartEnv({}, noService)
+  await assert.rejects(() => a.api["polish.start"]({ sessionId: "s1", text: "草稿" }), e => e.code === "subagent-unavailable")
+  const ctx = fakeSubagentCtx()
+  ctx.subagents.getProvider = () => undefined
+  const b = await buildStartEnv({ subagentProvider: "nope" }, ctx)
+  await assert.rejects(() => b.api["polish.start"]({ sessionId: "s1", text: "草稿" }), e => e.code === "subagent-unavailable")
+})
+
+// ── 客户端静态守卫（0.2.0 解耦 better-sidebar；inject 面收敛）──
+test("client: better-sidebar 耦合清零 + inject 含 sessions + 主路径走 polish.start/openSubagent", async () => {
+  const bundle = readFileSync(new URL("../src/client.bundle.js", import.meta.url), "utf8")
+  // 反守卫：不得再出现任何 better-sidebar 运行时耦合（注释里的历史说明不算——按运行时符号查）
+  for (const banned of ["ctx.betterSidebar", "ctx.layout", "sidechat.start", "MODULE_CTX", "SIDE_CHAT_ROUTE"]) {
+    assert.equal(bundle.includes(banned), false, "残留符号: " + banned)
+  }
+  const injectLine = bundle.split("\n").find(l => l.includes("module.exports = { apply: apply, inject:"))
+  assert.ok(injectLine.includes("sessions"), "inject 必须声明 sessions")
+  assert.ok(!injectLine.includes("betterSidebar"))
+  assert.ok(bundle.includes('callApi("polish.start"'))
+  assert.ok(bundle.includes("ctx.sessions.openSubagent"))
+  assert.ok(bundle.includes("continuable"))
+})
+
