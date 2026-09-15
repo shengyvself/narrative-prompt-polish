@@ -1,3 +1,10 @@
+> [!IMPORTANT]
+> **本仓已迁移** → 请使用 **[dsh-prompt-only-forge](https://github.com/shengyvself/dsh-prompt-only-forge)**（v0.3.0+，2026-09-14 首发）。
+> 旧仓 `narrative-prompt-polish` 保持只读状态，**不再接受新提交**；历史版本（v0.0.26 / v0.0.27 / v0.1.0 / v0.2.0）仍可通过 Releases 页获取。
+> 新仓定位：纯注入（no send action）提示词润色，独立于 better-sidebar 侧栏对话，架构与 API 完全重写。
+>
+> — shengyv, 2026-09-14
+
 # narrative-prompt-polish
 
 Shengyv's Writing Architecture 的提示词优化插件：主会话输入框右座 ✨ 一键起一个
